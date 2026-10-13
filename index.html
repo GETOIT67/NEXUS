@@ -38,12 +38,7 @@ const marker = localStorage.getItem(markerKey);if(!marker){let localCopy=notes.m
 const {data,error}=await cloudClient.from('notes').select('id,title,content,type,tags,pinned,created_at,updated_at').eq('user_id',cloudUser.id).order('updated_at',{ascending:false});if(error)throw error;notes=(data||[]).map(fromDb);save();render();resurface();updateAccountUI();toast(`Cloud sync complete · ${notes.length} notes loaded.`);//fuck//
 }catch(e){console.error(e);toast('Could not sync notes: '+(e.message||'check the database setup'));}}
 
-async function authAction(mode) {
-  if (!cloudClient) {
-    toast('Save your Supabase project connection first.');
-    return;
-  }
-
+async function authAction(mode) 
   const email = $('emailInput').value.trim();
   const password = $('passwordInput').value;
 
