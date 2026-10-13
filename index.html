@@ -35,7 +35,7 @@ function updateAccountUI(){let connected=!!cloudClient&&!!cloudSession,user=clou
 async function cloudUpsert(n){if(!cloudClient||!cloudUser)return;try{const row=toDb(n);const {error}=await cloudClient.from('notes').upsert(row,{onConflict:'id'});if(error)throw error;}catch(e){console.error(e);toast('Cloud save failed: '+(e.message||'check your notes table and connection'));}}
 async function cloudDelete(id){if(!cloudClient||!cloudUser||!isUuid(id))return;const {error}=await cloudClient.from('notes').delete().eq('id',id).eq('user_id',cloudUser.id);if(error){console.error(error);toast('Cloud delete failed: '+error.message)}}
 async function syncAfterLogin(){if(!cloudClient||!cloudUser)return;try{const marker=localStorage.getItem(LOCAL_IMPORTED);if(!marker){let localCopy=notes.map(n=>({...n,tags:[...(n.tags||[])]}));for(const n of localCopy){if(!isUuid(n.id))n.id=uid();}if(localCopy.length){const rows=localCopy.map(toDb);const {error}=await cloudClient.from('notes').upsert(rows,{onConflict:'id'});if(error)throw error;}localStorage.setItem(LOCAL_IMPORTED,'1');}
-const {data,error}=await cloudClient.from('notes').select('id,title,content,type,tags,pinned,created_at,updated_at').eq('user_id',cloudUser.id).order('updated_at',{ascending:false});if(error)throw error;notes=(data||[]).map(fromDb);save();render();resurface();updateAccountUI();toast(`Cloud sync complete · ${notes.length} notes loaded.`);
+const {data,error}=await cloudClient.from('notes').select('id,title,content,type,tags,pinned,created_at,updated_at').eq('user_id',cloudUser.id).order('updated_at',{ascending:false});if(error)throw error;notes=(data||[]).map(fromDb);save();render();resurface();updateAccountUI();toast(`Cloud sync complete · ${notes.length} notes loaded.`);//fuck//
 }catch(e){console.error(e);toast('Could not sync notes: '+(e.message||'check the database setup'));}}
 async function authAction(mode){if(!cloudClient){toast('Save your Supabase project connection first.');return}const email=$('emailInput').value.trim(),password=$('passwordInput').value;if(!email||!password){toast('Enter your email and password first.');return}try{let result;if(mode==='signup')result=await cloudClient.auth.signUp({email,password});else result=await cloudClient.auth.signInWithPassword({email,password});if(result.error)throw result.error;if(mode==='signup'&&!result.data.session){toast('Account created! Check your email to confirm, then sign in here.');return}cloudSession=result.data.session;cloudUser=cloudSession?.user||result.data.user||null;if(!cloudUser){toast('Account request completed. If email confirmation is on, verify your email then sign in.');return}await syncAfterLogin();updateAccountUI();}catch(e){console.error(e);toast((mode==='signup'?'Signup':'Sign-in')+' failed: '+(e.message||'please try again'));}}
 async function signOut(){try{if(cloudClient)await cloudClient.auth.signOut()}catch(e){}cloudSession=null;cloudUser=null;notes=[];activity=[];try{localStorage.setItem(KEY,'[]');localStorage.removeItem(ACT)}catch(e){}load();render();updateAccountUI();$('accountBackdrop').classList.remove('open');toast('Signed out. Your cloud notes remain in your account.');}
@@ -53,4 +53,23 @@ $('nav').addEventListener('click',e=>{let b=e.target.closest('[data-view]');if(b
 
 $('accountBtn').addEventListener('click',()=>{$('accountBackdrop').classList.add('open');updateAccountUI()});$('closeAccount').addEventListener('click',()=>$('accountBackdrop').classList.remove('open'));$('accountBackdrop').addEventListener('click',e=>{if(e.target===$('accountBackdrop'))$('accountBackdrop').classList.remove('open')});$('saveConfigBtn').addEventListener('click',()=>{const url=$('projectUrlInput').value.trim().replace(/\/$/,''),key=$('publishableKeyInput').value.trim();if(!/^https:\/\/[a-z0-9-]+\.supabase\.co$/i.test(url)){toast('Enter a valid Supabase Project URL.');return}if(!key||key.includes('service_role')||key.startsWith('sb_secret_')){toast('Use the publishable key or legacy anon key — never a secret key.');return}try{localStorage.setItem(CONFIG,JSON.stringify({url,key}));initCloud();toast('Project connection saved on this browser.')}catch(e){toast('Could not save connection.')}});$('signInBtn').addEventListener('click',()=>authAction('signin'));$('signUpBtn').addEventListener('click',()=>authAction('signup'));$('signOutBtn').addEventListener('click',signOut);$('disconnectBtn').addEventListener('click',()=>{if(!confirm('Disconnect this browser from the Supabase project? Your cloud notes will not be deleted.'))return;try{localStorage.removeItem(CONFIG)}catch(e){}cloudClient=null;cloudSession=null;cloudUser=null;updateAccountUI();toast('Project disconnected. Cloud notes remain online.')});
 let hr=new Date().getHours();$('greeting').textContent=hr<12?'Good morning.':hr<18?'Good afternoon.':'Good evening.';$('date').textContent='◷  '+new Date().toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'});load();render();resurface();initCloud();if(cloudClient){cloudClient.auth.getSession().then(async ({data,error})=>{if(error){console.error(error);return}cloudSession=data.session;cloudUser=cloudSession?.user||null;if(cloudUser)await syncAfterLogin();updateAccountUI()}).catch(console.error)} })();
+</script> <script type="text/plain" id="nexus_secret">
+You found it.
+
+Some real messy shit down here.
+
+Shoutout Tailgate Frenzy.
+Built different since day one.
+
+If you're reading this, you have officially
+spent too much time inspecting this website.
+
+There are no secrets here.
+
+Seriously.
+
+Stop looking.
+
+- NEXUS Development Team
+- 2026
 </script></body></html>
